@@ -1,4 +1,4 @@
-package application
+package usecases
 
 import (
 	"context"
@@ -7,29 +7,29 @@ import (
 	"github.com/jdluques/url-shortener/internal/domain/url"
 )
 
-type CreateURLService struct {
+type ShortenURLUseCase struct {
 	repo         url.URLRepository
 	idGen        url.IDGenerator
 	shortCodeGen url.ShortCodeGenerator
 	now          func() time.Time
 }
 
-func NewCreateURLService(
+func NewShortenURLUseCase(
 	repo url.URLRepository,
 	idGen url.IDGenerator,
 	shortCodeGen url.ShortCodeGenerator,
-) *CreateURLService {
-	return &CreateURLService{
+) *ShortenURLUseCase {
+	return &ShortenURLUseCase{
 		repo:         repo,
 		idGen:        idGen,
 		shortCodeGen: shortCodeGen,
 	}
 }
 
-func (service *CreateURLService) Create(
+func (service *ShortenURLUseCase) Execute(
 	ctx context.Context,
 	originalURL string,
-	expiresAt time.Time,
+	expiresIn time.Duration,
 ) (*url.URL, error) {
 	id, err := service.idGen.NextID()
 	if err != nil {
@@ -40,8 +40,6 @@ func (service *CreateURLService) Create(
 	if err != nil {
 		return nil, err
 	}
-
-	expiresIn := 30 * 24 * time.Hour
 
 	url, err := url.NewURL(
 		id,

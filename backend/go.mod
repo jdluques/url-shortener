@@ -2,7 +2,10 @@ module github.com/jdluques/url-shortener
 
 go 1.25.5
 
-require github.com/redis/go-redis/v9 v9.17.2
+require (
+	github.com/bwmarrin/snowflake v0.3.0
+	github.com/redis/go-redis/v9 v9.17.2
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

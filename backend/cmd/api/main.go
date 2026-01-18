@@ -17,7 +17,10 @@ import (
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
 	cacheAddr := os.Getenv("CACHE_ADDRESS")
-	port := os.Getenv("PORT")
+	serverHost := os.Getenv("SERVER_HOST")
+	serverPort := os.Getenv("SERVER_PORT")
+
+	serverAddr := serverHost + ":" + serverPort
 
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
@@ -38,7 +41,7 @@ func main() {
 	shortenURLHandler := handlers.NewShortenURLHandler(*shortenURLUseCase)
 
 	router := http.NewRouter(shortenURLHandler)
-	server := http.NewServer(router)
+	server := http.NewServer(router, serverAddr)
 
-	log.Fatal(server.Start(":" + port))
+	log.Fatal(server.Start())
 }

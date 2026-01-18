@@ -49,7 +49,7 @@ func main() {
 	urlRepo := postgres.NewURLRepository(db)
 	cache := redis.NewRedisCache(envVars.CacheAddress)
 
-	idGen, err := id.NewSnowFlakeGenerator(1)
+	idGen, err := id.NewSnowFlakeGenerator(envVars.NodeId)
 	if err != nil {
 		logger.Fatal("failed to create id generator", zap.Error(err))
 	}

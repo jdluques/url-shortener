@@ -9,6 +9,7 @@ type specification struct {
 	AllowedOrigins []string `required:"true" split_words:"true"`
 	DatabaseSource string   `required:"true" split_words:"true"`
 	CacheAddress   string   `required:"true" split_words:"true"`
+	NodeId         int64    `required:"true" split_words:"true"`
 }
 
 func LoadEnvVars() (*specification, error) {

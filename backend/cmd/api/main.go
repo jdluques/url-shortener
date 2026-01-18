@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -59,9 +64,26 @@ func main() {
 	router := http.NewRouter(envVars.AllowedOrigins, logger, shortenURLHandler, redirectHandler)
 	server := http.NewServer(router, serverAddr)
 
-	logger.Info("http server started")
+	go func() {
+		logger.Info("http server started")
+		if err := server.Start(); err != nil {
+			logger.Fatal("http server stopped with error", zap.Error(err))
+		}
+	}()
 
-	if err := server.Start(); err != nil {
-		logger.Fatal("http server stopped with error", zap.Error(err))
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	<-signalChan
+
+	logger.Info("shutting server down gracefully")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Fatal("server shutdown failed", zap.Error(err))
 	}
+
+	logger.Info("server gracefully stopped")
 }

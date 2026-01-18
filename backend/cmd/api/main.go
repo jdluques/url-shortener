@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -21,10 +22,13 @@ func main() {
 	env := os.Getenv("ENV")
 	serverHost := os.Getenv("SERVER_HOST")
 	serverPort := os.Getenv("SERVER_PORT")
+	allowedOriginsStr := os.Getenv("ALLOWED_ORIGINS")
 	databaseURL := os.Getenv("DATABASE_URL")
 	cacheAddr := os.Getenv("CACHE_ADDRESS")
 
 	serverAddr := serverHost + ":" + serverPort
+
+	allowedOrigins := strings.Split(allowedOriginsStr, ",")
 
 	logger, err := logging.NewLogger(env)
 	if err != nil {
@@ -61,7 +65,7 @@ func main() {
 	shortenURLHandler := handlers.NewShortenURLHandler(*shortenURLUseCase)
 	redirectHandler := handlers.NewRedirectHandler(*redirectUseCase)
 
-	router := http.NewRouter(logger, shortenURLHandler, redirectHandler)
+	router := http.NewRouter(allowedOrigins, logger, shortenURLHandler, redirectHandler)
 	server := http.NewServer(router, serverAddr)
 
 	logger.Info("http server started")

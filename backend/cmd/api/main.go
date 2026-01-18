@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"strconv"
 
@@ -37,13 +36,9 @@ func main() {
 		zap.String("addr", serverAddr),
 	)
 
-	db, err := sql.Open("postgres", envVars.DatabaseSource)
+	db, err := postgres.NewPostgresDatabaseConnection(logger, envVars.DatabaseSource)
 	if err != nil {
-		logger.Fatal("failed to open database", zap.Error(err))
-	}
-
-	if err := db.Ping(); err != nil {
-		logger.Fatal("failed to ping database", zap.Error(err))
+		logger.Fatal("failed to connect to database", zap.Error(err))
 	}
 
 	urlRepo := postgres.NewURLRepository(db)

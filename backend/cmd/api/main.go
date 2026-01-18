@@ -3,12 +3,12 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
-	"strings"
+	"strconv"
 
 	"go.uber.org/zap"
 
 	"github.com/jdluques/url-shortener/internal/application/usecases"
+	"github.com/jdluques/url-shortener/internal/config"
 	"github.com/jdluques/url-shortener/internal/infrastructure/http"
 	"github.com/jdluques/url-shortener/internal/infrastructure/http/handlers"
 	"github.com/jdluques/url-shortener/internal/infrastructure/id"
@@ -19,29 +19,25 @@ import (
 )
 
 func main() {
-	env := os.Getenv("ENV")
-	serverHost := os.Getenv("SERVER_HOST")
-	serverPort := os.Getenv("SERVER_PORT")
-	allowedOriginsStr := os.Getenv("ALLOWED_ORIGINS")
-	databaseURL := os.Getenv("DATABASE_URL")
-	cacheAddr := os.Getenv("CACHE_ADDRESS")
+	envVars, err := config.LoadEnvVars()
+	if err != nil {
+		log.Fatalf("failed to load env vars: %v", err)
+	}
 
-	serverAddr := serverHost + ":" + serverPort
+	serverAddr := envVars.ServerHost + ":" + strconv.Itoa(envVars.ServerPort)
 
-	allowedOrigins := strings.Split(allowedOriginsStr, ",")
-
-	logger, err := logging.NewLogger(env)
+	logger, err := logging.NewLogger(envVars.Env)
 	if err != nil {
 		log.Fatalf("failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
 
 	logger.Info("starting url-shortener",
-		zap.String("env", env),
+		zap.String("env", envVars.Env),
 		zap.String("addr", serverAddr),
 	)
 
-	db, err := sql.Open("postgres", databaseURL)
+	db, err := sql.Open("postgres", envVars.DatabaseSource)
 	if err != nil {
 		logger.Fatal("failed to open database", zap.Error(err))
 	}
@@ -51,7 +47,7 @@ func main() {
 	}
 
 	urlRepo := postgres.NewURLRepository(db)
-	cache := redis.NewRedisCache(cacheAddr)
+	cache := redis.NewRedisCache(envVars.CacheAddress)
 
 	idGen, err := id.NewSnowFlakeGenerator(1)
 	if err != nil {
@@ -65,7 +61,7 @@ func main() {
 	shortenURLHandler := handlers.NewShortenURLHandler(*shortenURLUseCase)
 	redirectHandler := handlers.NewRedirectHandler(*redirectUseCase)
 
-	router := http.NewRouter(allowedOrigins, logger, shortenURLHandler, redirectHandler)
+	router := http.NewRouter(envVars.AllowedOrigins, logger, shortenURLHandler, redirectHandler)
 	server := http.NewServer(router, serverAddr)
 
 	logger.Info("http server started")

@@ -14,6 +14,7 @@ import (
 func NewRouter(
 	logger *zap.Logger,
 	shortenURLHandler *handlers.ShortenURLHandler,
+	redirectHandler *handlers.RedirectHandler,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -27,6 +28,7 @@ func NewRouter(
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/shorten", shortenURLHandler.ServeHTTP)
+		r.Get("/{code}", redirectHandler.ServeHTTP)
 	})
 
 	return r

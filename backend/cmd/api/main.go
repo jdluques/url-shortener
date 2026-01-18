@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"go.uber.org/zap"
+
 	"github.com/jdluques/url-shortener/internal/application/usecases"
 	"github.com/jdluques/url-shortener/internal/infrastructure/http"
 	"github.com/jdluques/url-shortener/internal/infrastructure/http/handlers"
@@ -13,7 +15,6 @@ import (
 	"github.com/jdluques/url-shortener/internal/infrastructure/postgres"
 	"github.com/jdluques/url-shortener/internal/infrastructure/redis"
 	"github.com/jdluques/url-shortener/internal/infrastructure/shortcode"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -55,10 +56,12 @@ func main() {
 	shortCodeGen := shortcode.NewBase62Generator()
 
 	shortenURLUseCase := usecases.NewShortenURLUseCase(urlRepo, cache, idGen, shortCodeGen)
+	redirectUseCase := usecases.NewRedirectUseCase(urlRepo, cache)
 
 	shortenURLHandler := handlers.NewShortenURLHandler(*shortenURLUseCase)
+	redirectHandler := handlers.NewRedirectHandler(*redirectUseCase)
 
-	router := http.NewRouter(logger, shortenURLHandler)
+	router := http.NewRouter(logger, shortenURLHandler, redirectHandler)
 	server := http.NewServer(router, serverAddr)
 
 	logger.Info("http server started")

@@ -23,8 +23,8 @@ func (handler *ShortenURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	logger := logging.LoggerFromContext(r.Context())
 
 	var req struct {
-		URL string        `json:"url"`
-		TTL time.Duration `json:"ttl"`
+		OriginalURL string        `json:"originalUrl"`
+		TTL         time.Duration `json:"ttl"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -35,7 +35,7 @@ func (handler *ShortenURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	ctx := r.Context()
 
-	shortURL, err := handler.usecase.Execute(ctx, req.URL, req.TTL)
+	shortURL, err := handler.usecase.Execute(ctx, req.OriginalURL, req.TTL)
 	if err != nil {
 		logger.Error("failed to shorten url", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
